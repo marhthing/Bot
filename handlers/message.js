@@ -6,12 +6,14 @@
 const { Logger } = require('../lib/logger');
 const { Utils } = require('../lib/utils');
 const { MessageQueue } = require('../lib/queue');
+const { PermissionManager } = require('../lib/permissions');
 const config = require('../config');
 
 class MessageHandler {
     constructor(client) {
         this.client = client;
         this.logger = new Logger('MATDEV-MSG');
+        this.permissionManager = new PermissionManager();
         this.rateLimiter = Utils.createRateLimiter(
             config.RATE_LIMIT_REQUESTS,
             config.RATE_LIMIT_WINDOW_MS
@@ -25,12 +27,29 @@ class MessageHandler {
             // Skip if no message content
             if (!message.message) continue;
             
-            // If message is from me (outgoing), only process if it starts with prefix
+            // Owner permission system: Only process outgoing messages or allowed incoming messages
             if (message.key.fromMe) {
+                // If message is from me (outgoing), only process if it starts with prefix
                 const messageContent = this.extractMessageContent(message);
                 const text = messageContent.text || '';
-                // Only process outgoing messages that start with the prefix
                 if (!text.startsWith(config.PREFIX)) continue;
+            } else {
+                // If message is incoming, skip unless user has permission
+                const messageContent = this.extractMessageContent(message);
+                const text = messageContent.text || '';
+                const sender = Utils.getPhoneNumber(message.key.remoteJid);
+                
+                // Skip if not a command
+                if (!text.startsWith(config.PREFIX)) continue;
+                
+                // Extract command name
+                const commandData = Utils.parseCommand(text, config.PREFIX);
+                if (!commandData) continue;
+                
+                // Check if user has permission for this command
+                if (!this.permissionManager.hasPermission(sender, commandData.command)) {
+                    continue; // Silently ignore unauthorized commands
+                }
             }
             
             // Add to processing queue
@@ -191,6 +210,10 @@ class MessageHandler {
         context.command = command;
         context.args = args;
         context.fullArgs = commandData.fullArgs;
+        
+        // Check if user is owner (for owner-only commands)
+        const isOwner = context.message.key.fromMe || context.sender === config.OWNER_NUMBER;
+        context.isOwner = isOwner;
         
         try {
             // Execute command through plugin loader
