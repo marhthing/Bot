@@ -28,13 +28,22 @@ module.exports = {
                     // Format the response with detailed JID information
                     let response = '📋 *Chat JID Information:*\n\n';
 
-                    // Current chat JID (normalized)
-                    const normalizedJid = Utils.normalizeJid(chatId);
-                    response += `🎯 *Current Chat JID:*\n\`${normalizedJid}\`\n\n`;
+                    // For private chats, use the sender's normalized JID as the chat JID
+                    // For group chats, use the chat JID
+                    let actualChatJid;
+                    if (isPrivate) {
+                        // In private chat, the chat JID should be the sender's normalized JID
+                        actualChatJid = Utils.normalizeJid(sender);
+                    } else {
+                        // In group chat, use the group JID
+                        actualChatJid = Utils.normalizeJid(chatId);
+                    }
 
-                    // Show raw JID if it's different (like @lid format)
-                    if (chatId !== normalizedJid) {
-                        response += `🔍 *Raw JID:*\n\`${chatId}\`\n\n`;
+                    response += `🎯 *Chat JID:*\n\`${actualChatJid}\`\n\n`;
+
+                    // Show raw JID for debugging if it's different
+                    if (chatId !== actualChatJid) {
+                        response += `🔍 *Raw Chat JID:*\n\`${chatId}\`\n\n`;
                     }
 
                     // Chat type
@@ -61,20 +70,20 @@ module.exports = {
 
                     // Formatted versions
                     response += `📝 *Formatted Info:*\n`;
-                    response += `├ Display: ${Utils.formatJid(chatId)}\n`;
-                    response += `├ Normalized: ${Utils.normalizeJid(chatId)}\n`;
+                    response += `├ Display: ${Utils.formatJid(actualChatJid)}\n`;
+                    response += `├ Normalized: ${actualChatJid}\n`;
 
                     if (!isGroup) {
-                        response += `└ Phone: ${Utils.getPhoneNumber(chatId)}\n\n`;
+                        response += `└ Phone: ${Utils.getPhoneNumber(actualChatJid)}\n\n`;
                     } else {
-                        response += `└ Group ID: ${chatId.split('@')[0]}\n\n`;
+                        response += `└ Group ID: ${actualChatJid.split('@')[0]}\n\n`;
                     }
 
                     // Usage examples
                     response += `💡 *Usage Examples:*\n`;
-                    response += `• Grant permission: \`${config.PREFIX}allow ${chatId} ping\`\n`;
-                    response += `• Remove permission: \`${config.PREFIX}remove ${chatId} ping\`\n`;
-                    response += `• List permissions: \`${config.PREFIX}permissions ${chatId}\``;
+                    response += `• Grant permission: \`${config.PREFIX}allow ${actualChatJid} ping\`\n`;
+                    response += `• Remove permission: \`${config.PREFIX}remove ${actualChatJid} ping\`\n`;
+                    response += `• List permissions: \`${config.PREFIX}permissions ${actualChatJid}\``;
 
                     await reply(response);
 
