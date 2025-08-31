@@ -22,8 +22,16 @@ class MessageHandler {
         const { messages, type } = messageUpdate;
         
         for (const message of messages) {
-            // Skip if message is from bot itself or no message content
-            if (message.key.fromMe || !message.message) continue;
+            // Skip if no message content
+            if (!message.message) continue;
+            
+            // If message is from me (outgoing), only process if it starts with prefix
+            if (message.key.fromMe) {
+                const messageContent = this.extractMessageContent(message);
+                const text = messageContent.text || '';
+                // Only process outgoing messages that start with the prefix
+                if (!text.startsWith(config.PREFIX)) continue;
+            }
             
             // Add to processing queue
             await this.client.messageQueue.add(
