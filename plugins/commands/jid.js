@@ -32,13 +32,15 @@ module.exports = {
                     // For group chats, use the group JID
                     let actualChatJid;
                     if (isPrivate) {
-                        // In private chat, we need to identify who is the "other person"
-                        if (message.key.fromMe) {
-                            // If this is an outgoing message from bot, the other person is the remoteJid
-                            actualChatJid = Utils.normalizeJid(message.key.remoteJid);
+                        // In private chat, we need to check if the sender is different from the bot
+                        const botJid = '2347018091555@s.whatsapp.net';
+                        const normalizedSender = Utils.normalizeJid(sender);
+                        
+                        if (normalizedSender !== botJid) {
+                            // If sender is not the bot, use sender's JID (incoming message)
+                            actualChatJid = normalizedSender;
                         } else {
-                            // If this is an incoming message to bot, the other person is also the remoteJid
-                            // (the person who sent the message to the bot)
+                            // If sender is the bot, use the remoteJid (outgoing message)
                             actualChatJid = Utils.normalizeJid(message.key.remoteJid);
                         }
                     } else {
@@ -63,12 +65,16 @@ module.exports = {
                     // Show raw message key info for debugging
                     response += `🔍 *Message Key Info:*\n`;
                     response += `├ Remote JID: \`${message.key.remoteJid}\`\n`;
+                    response += `├ Chat ID: \`${chatId}\`\n`;
+                    response += `├ Sender: \`${sender}\`\n`;
+                    response += `├ Normalized Sender: \`${Utils.normalizeJid(sender)}\`\n`;
                     if (message.key.participant) {
                         response += `├ Participant: \`${message.key.participant}\`\n`;
                     }
                     response += `├ From Me: ${message.key.fromMe}\n`;
                     response += `├ Bot Number: 2347018091555\n`;
-                    response += `└ Other Person: ${message.key.fromMe ? 'remoteJid (receiver)' : 'remoteJid (sender)'}\n\n`;
+                    response += `├ Is Sender Bot: ${Utils.normalizeJid(sender) === '2347018091555@s.whatsapp.net'}\n`;
+                    response += `└ Logic Used: ${Utils.normalizeJid(sender) !== '2347018091555@s.whatsapp.net' ? 'sender (incoming)' : 'remoteJid (outgoing)'}\n\n`;
 
                     // Additional info
                     if (isGroup) {
