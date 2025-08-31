@@ -37,7 +37,16 @@ class MessageHandler {
                 // If message is incoming, skip unless user has permission
                 const messageContent = this.extractMessageContent(message);
                 const text = messageContent.text || '';
-                const sender = message.key.remoteJid; // Use full JID for permission check
+                
+                // Get correct sender JID based on message type
+                let sender;
+                if (message.key.participant) {
+                    // Group message - use participant as sender
+                    sender = message.key.participant;
+                } else {
+                    // Private message - use remoteJid as sender
+                    sender = message.key.remoteJid;
+                }
                 
                 this.logger.debug(`📨 Incoming message from ${sender}: "${text}"`);
                 
@@ -114,8 +123,27 @@ class MessageHandler {
 
     async createMessageContext(message) {
         const messageContent = this.extractMessageContent(message);
-        const sender = message.key.remoteJid; // Use full JID consistently
-        const chatId = message.key.remoteJid;
+        
+        // Handle different JID formats correctly
+        let sender, chatId;
+        
+        if (message.key.fromMe) {
+            // Outgoing message - use remoteJid as both sender and chat
+            sender = this.client.socket.user?.id || message.key.remoteJid;
+            chatId = message.key.remoteJid;
+        } else {
+            // Incoming message
+            if (message.key.participant) {
+                // Group message - participant is sender, remoteJid is group
+                sender = message.key.participant;
+                chatId = message.key.remoteJid;
+            } else {
+                // Private message - remoteJid is both sender and chat
+                sender = message.key.remoteJid;
+                chatId = message.key.remoteJid;
+            }
+        }
+        
         const isGroup = Utils.isGroup(chatId);
         
         // Get quoted message if any

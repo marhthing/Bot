@@ -23,7 +23,7 @@ module.exports = {
                 '.jid - Display current chat JID information'
             ],
             async handler(context) {
-                const { chatId, isGroup, isPrivate, reply, sender } = context;
+                const { chatId, isGroup, isPrivate, reply, sender, message } = context;
                 
                 try {
                     // Format the response with detailed JID information
@@ -36,10 +36,16 @@ module.exports = {
                     const chatType = isGroup ? 'Group Chat' : 'Private Chat';
                     response += `💬 *Chat Type:* ${chatType}\n\n`;
                     
-                    // Sender JID (if different from chat)
-                    if (sender !== chatId) {
-                        response += `👤 *Your JID:*\n\`${sender}\`\n\n`;
+                    // Show sender info
+                    response += `👤 *Sender JID:*\n\`${sender}\`\n\n`;
+                    
+                    // Show raw message key info for debugging
+                    response += `🔍 *Message Key Info:*\n`;
+                    response += `├ Remote JID: \`${message.key.remoteJid}\`\n`;
+                    if (message.key.participant) {
+                        response += `├ Participant: \`${message.key.participant}\`\n`;
                     }
+                    response += `└ From Me: ${message.key.fromMe}\n\n`;
                     
                     // Additional info
                     if (isGroup) {
