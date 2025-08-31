@@ -102,7 +102,11 @@ class MatdevBot {
             
             try {
                 if (this.client) {
-                    await this.client.destroy();
+                    // Preserve session by not calling destroy which logs out
+                    if (this.client.socket) {
+                        this.client.socket.end();
+                    }
+                    await this.client.sessionManager.backup();
                 }
                 
                 this.performanceMonitor.stop();
