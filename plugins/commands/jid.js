@@ -32,9 +32,15 @@ module.exports = {
                     // For group chats, use the group JID
                     let actualChatJid;
                     if (isPrivate) {
-                        // In private chat, use the chat JID (which represents the other person)
-                        // The chatId in private chats is the other person's JID
-                        actualChatJid = Utils.normalizeJid(chatId);
+                        // In private chat, we need to identify who is the "other person"
+                        if (message.key.fromMe) {
+                            // If this is an outgoing message from bot, the other person is the remoteJid
+                            actualChatJid = Utils.normalizeJid(message.key.remoteJid);
+                        } else {
+                            // If this is an incoming message to bot, the other person is also the remoteJid
+                            // (the person who sent the message to the bot)
+                            actualChatJid = Utils.normalizeJid(message.key.remoteJid);
+                        }
                     } else {
                         // In group chat, use the group JID
                         actualChatJid = Utils.normalizeJid(chatId);
@@ -60,7 +66,9 @@ module.exports = {
                     if (message.key.participant) {
                         response += `├ Participant: \`${message.key.participant}\`\n`;
                     }
-                    response += `└ From Me: ${message.key.fromMe}\n\n`;
+                    response += `├ From Me: ${message.key.fromMe}\n`;
+                    response += `├ Bot Number: 2347018091555\n`;
+                    response += `└ Other Person: ${message.key.fromMe ? 'remoteJid (receiver)' : 'remoteJid (sender)'}\n\n`;
 
                     // Additional info
                     if (isGroup) {
