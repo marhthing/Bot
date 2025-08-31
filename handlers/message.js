@@ -37,7 +37,7 @@ class MessageHandler {
                 // If message is incoming, skip unless user has permission
                 const messageContent = this.extractMessageContent(message);
                 const text = messageContent.text || '';
-                const sender = Utils.getPhoneNumber(message.key.remoteJid);
+                const sender = message.key.remoteJid; // Use full JID for permission check
                 
                 // Skip if not a command
                 if (!text.startsWith(config.PREFIX)) continue;
@@ -48,6 +48,7 @@ class MessageHandler {
                 
                 // Check if user has permission for this command
                 if (!this.permissionManager.hasPermission(sender, commandData.command)) {
+                    this.logger.debug(`❌ Permission denied for ${sender} to use command '${commandData.command}'`);
                     continue; // Silently ignore unauthorized commands
                 }
             }
@@ -101,7 +102,7 @@ class MessageHandler {
 
     async createMessageContext(message) {
         const messageContent = this.extractMessageContent(message);
-        const sender = Utils.getPhoneNumber(message.key.remoteJid);
+        const sender = message.key.remoteJid; // Use full JID consistently
         const chatId = message.key.remoteJid;
         const isGroup = Utils.isGroup(chatId);
         
