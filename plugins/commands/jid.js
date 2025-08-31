@@ -28,12 +28,13 @@ module.exports = {
                     // Format the response with detailed JID information
                     let response = '📋 *Chat JID Information:*\n\n';
 
-                    // For private chats, use the sender's normalized JID as the chat JID
-                    // For group chats, use the chat JID
+                    // For private chats, we want the other person's JID (not the bot's own JID)
+                    // For group chats, use the group JID
                     let actualChatJid;
                     if (isPrivate) {
-                        // In private chat, the chat JID should be the sender's normalized JID
-                        actualChatJid = Utils.normalizeJid(sender);
+                        // In private chat, use the chat JID (which represents the other person)
+                        // The chatId in private chats is the other person's JID
+                        actualChatJid = Utils.normalizeJid(chatId);
                     } else {
                         // In group chat, use the group JID
                         actualChatJid = Utils.normalizeJid(chatId);
@@ -65,7 +66,7 @@ module.exports = {
                     if (isGroup) {
                         response += `ℹ️ *Note:* This is a group chat JID. Use this JID when managing group permissions.\n\n`;
                     } else {
-                        response += `ℹ️ *Note:* This is a private chat JID. Use this JID when managing user permissions.\n\n`;
+                        response += `ℹ️ *Note:* This is the other person's JID in this private chat. Use this JID when managing their permissions.\n\n`;
                     }
 
                     // Formatted versions
