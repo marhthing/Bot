@@ -39,18 +39,30 @@ class MessageHandler {
                 const text = messageContent.text || '';
                 const sender = message.key.remoteJid; // Use full JID for permission check
                 
+                this.logger.debug(`📨 Incoming message from ${sender}: "${text}"`);
+                
                 // Skip if not a command
-                if (!text.startsWith(config.PREFIX)) continue;
+                if (!text.startsWith(config.PREFIX)) {
+                    this.logger.debug(`⏭️ Skipping non-command message: "${text}"`);
+                    continue;
+                }
                 
                 // Extract command name
                 const commandData = Utils.parseCommand(text, config.PREFIX);
-                if (!commandData) continue;
+                if (!commandData) {
+                    this.logger.debug(`❌ Failed to parse command from: "${text}"`);
+                    continue;
+                }
+                
+                this.logger.debug(`🔍 Checking permission for ${sender} to use '${commandData.command}'`);
                 
                 // Check if user has permission for this command
                 if (!this.permissionManager.hasPermission(sender, commandData.command)) {
-                    this.logger.debug(`❌ Permission denied for ${sender} to use command '${commandData.command}'`);
+                    this.logger.info(`❌ Permission denied for ${sender} to use command '${commandData.command}'`);
                     continue; // Silently ignore unauthorized commands
                 }
+                
+                this.logger.info(`✅ Permission granted for ${sender} to use '${commandData.command}'`);
             }
             
             // Add to processing queue
