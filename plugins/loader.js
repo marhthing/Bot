@@ -276,6 +276,10 @@ class PluginLoader {
         return this.plugins.size;
     }
 
+    isLoaded() {
+        return this.plugins.size > 0;
+    }
+
     getCommandCount() {
         return this.commands.size;
     }
